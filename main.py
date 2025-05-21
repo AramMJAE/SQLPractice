@@ -32,15 +32,6 @@ def get_db_connection():
         database=os.getenv("DB_NAME")
     )
 
-# def get_db_connection():
-#     return connect(
-#         host="centerbeam.proxy.rlwy.net",
-#         port=24181,
-#         user="root",
-#         password="mmuIFNDBhfPHGQLIveKZDWLiKtiwsQMX",
-#         database="railway"
-#     )
-
 # 사용자 정보 모델 (Pydantic)
 class UserCreate(BaseModel):
     username: str
