@@ -104,3 +104,50 @@ async def execute_sql(request: Request, sql_query: str = Form(...)):
 @app.get("/sql", response_class=HTMLResponse)
 async def sql_page(request: Request):
     return templates.TemplateResponse("sql_page.html", {"request": request, "rows": None, "columns": None, "error": None})
+
+@app.post("/submit_sql", response_class=HTMLResponse)
+async def submit_sql(request: Request, user_sql: str = Form(...), problem_id: int = Form(...)):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(user_sql)
+        columns = [desc[0] for desc in cursor.description]
+        rows = cursor.fetchall()
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        # 문제 정보도 다시 불러와야 함
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM sql_problems WHERE id = %s", (problem_id,))
+        problem = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        return templates.TemplateResponse("sql_challenge_detail.html", {
+            "request": request,
+            "problem": problem,
+            "result": rows,
+            "columns": columns,
+            "error": None,
+            "feedback": "정상적으로 실행되었습니다."
+        })
+
+    except Exception as e:
+        # 문제 정보도 같이 다시 불러와야 함
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM sql_problems WHERE id = %s", (problem_id,))
+        problem = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        return templates.TemplateResponse("sql_challenge_detail.html", {
+            "request": request,
+            "problem": problem,
+            "result": None,
+            "columns": None,
+            "error": str(e),
+            "feedback": "쿼리 실행 중 오류가 발생했습니다."
+        })
