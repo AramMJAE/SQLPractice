@@ -17,8 +17,8 @@ uvicorn main:app --reload
 ```
 
 3. **로컬 환경**
-- http://127.0.0.1:8000 에서 확인 가능
+- 서버 실행 후 http://127.0.0.1:8000
 
-4. **Vercel 환경** (진행중)
-- https://sql-practice-tau.vercel.app/
+4. **Vercel**
+- URL을 통해 확인 가능 https://sql-practice-tau.vercel.app/
 
