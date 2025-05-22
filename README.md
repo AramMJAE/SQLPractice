@@ -15,3 +15,6 @@ uv pip install -r requirements.txt
 ```bash
 uvicorn main:app --reload
 ```
+
+3. **로컬 환경**
+- http://127.0.0.1:8000 에서 확인 가능
