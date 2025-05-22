@@ -1,0 +1,72 @@
+<!-- templates/schema_info.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Database Schema</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .problem-card { background-color: #f9f9f9; padding: 20px; border-radius: 8px; }
+        ul { margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <h2>ClassicModels Database Schema</h2>
+
+    <label for="navigate">페이지 이동:</label>
+    <select id="navigate" onchange="location = this.value;">
+        <option value="#">-- 선택하세요 --</option>
+        <option value="/sql">자유 SQL 실행</option>
+        <option value="/sql_challenges">SQL 문제 풀기</option>
+    </select>
+
+    <div class="problem-card">
+        <h3>데이터베이스 테이블 정보</h3>
+        <p><strong>1. productlines</strong>: 제품 라인 정보</p>
+        <ul>
+            <li>productLine, textDescription, htmlDescription, image</li>
+        </ul>
+        <p><strong>2. products</strong>: 제품 정보</p>
+        <ul>
+            <li>productCode, productName, productLine, productScale, productVendor,
+                productDescription, quantityInStock, buyPrice, MSRP</li>
+        </ul>
+        <p><strong>3. offices</strong>: 사무실 정보</p>
+        <ul>
+           <li>officeCode, city, phone, addressLine1, addressLine2, state, country, 
+             postalCode, territory</li>
+        </ul>
+        
+        <p><strong>4. employees</strong>: 직원 정보</p>
+        <ul>
+           <li>employeeNumber, lastName, firstName, extension, email, officeCode, 
+             reportsTo, jobTitle</li>
+        </ul>
+        
+        <p><strong>5. customers</strong>: 고객 정보</p>
+        <ul>
+           <li>customerNumber, customerName, contactLastName, contactFirstName, phone, 
+             addressLine1, addressLine2, city, state, postalCode, country, 
+             salesRepEmployeeNumber, creditLimit</li>
+        </ul>
+        
+        <p><strong>6. payments</strong>: 결제 정보</p>
+        <ul>
+           <li>customerNumber, checkNumber, paymentDate, amount</li>
+        </ul>
+        
+        <p><strong>7. orders</strong>: 주문 정보</p>
+        <ul>
+           <li>orderNumber, orderDate, requiredDate, shippedDate, status, comments, 
+             customerNumber</li>
+        </ul>
+        
+        <p><strong>8. orderdetails</strong>: 주문 상세 정보</p>
+        <ul>
+           <li>orderNumber, productCode, quantityOrdered, priceEach, orderLineNumber</li>
+        </ul>
+    </div>
+
+    <h3 style="margin-top:40px;">ERD (Entity Relationship Diagram)</h3>
+    <img src="/static/images/mysql-sample-database.png" alt="ERD Diagram" style="width:100%;">
+</body>
+</html>

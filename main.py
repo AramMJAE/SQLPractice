@@ -21,8 +21,9 @@ templates = Jinja2Templates(directory="templates")
 # 비밀번호 해싱 설정
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# MySQL 연결 함수
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
+# MySQL 연결 함수
 def get_db_connection():
     return connect(
         host=os.getenv("DB_HOST"),
@@ -85,8 +86,8 @@ async def login(request: Request, username: str = Form(...), password: str = For
     cursor.close()
     conn.close()
 
-    # 로그인 성공 시 SQL 페이지로 리디렉션
-    return RedirectResponse(url="/sql", status_code=302)
+    # 로그인 성공 시 데이터 스키마 페이지로 리디렉션
+    return RedirectResponse(url="/schema", status_code=302)
     # return templates.TemplateResponse("welcome.html", {"request": request, "username": username})
 
 # SQL 쿼리 실행 엔드포인트
@@ -111,6 +112,13 @@ async def execute_sql(request: Request, sql_query: str = Form(...)):
     except Exception as e:
         return templates.TemplateResponse("sql_page.html", {"request": request, "result": None, "error": str(e)})
 
+# SQL_challenge 엔드포인트
+# @app.post("/sql_challenges", response_class=HTMLResponse)
+# async def redirect_to_problem(request: Request, problem_id: int = Form(...)):
+#     # 선택한 문제의 페이지로 리디렉션
+#     return RedirectResponse(url=f"/sql_challenges/{problem_id}", status_code=302)
+
+
 
 # 로그인 화면 (GET 요청)
 @app.get("/", response_class=HTMLResponse)
@@ -126,3 +134,92 @@ async def register_form(request: Request):
 @app.get("/sql", response_class=HTMLResponse)
 async def sql_page(request: Request):
     return templates.TemplateResponse("sql_page.html", {"request": request, "result": None, "error": None})
+
+# 데이터베이스 스키마 정보 표시 페이지
+@app.get("/schema", response_class=HTMLResponse)
+async def schema_info(request: Request):
+    return templates.TemplateResponse("schema_info.html", {"request": request})
+
+# SQL 문제 페이지 (문제 목록)
+@app.get("/sql_challenges", response_class=HTMLResponse)
+async def sql_challenge_page(request: Request, problem_id: int = None):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT * FROM sql_problems")
+    problems = cursor.fetchall()  # 문제 목록을 가져옵니다
+    
+    cursor.close()
+    conn.close()
+
+    # problem_id가 존재하면 해당 문제로 리디렉션
+    if problem_id:
+        return RedirectResponse(url=f"/sql_challenges/{problem_id}", status_code=302)
+
+    return templates.TemplateResponse("sql_challenges.html", {"request": request, "problems": problems})
+
+# SQL 문제 상세 페이지
+@app.get("/sql_challenges/{problem_id}", response_class=HTMLResponse)
+async def sql_challenge_detail(request: Request, problem_id: int):
+    # 문제의 상세 정보 가져오기
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM sql_problems WHERE id = %s", (problem_id,))
+    problem = cursor.fetchone()
+    cursor.close()
+    conn.close()
+
+    if not problem:
+        raise HTTPException(status_code=404, detail="Problem not found")
+
+    # 문제 상세 페이지 반환
+    return templates.TemplateResponse("sql_challenge_detail.html", {"request": request, "problem": problem})
+
+@app.post("/submit_sql", response_class=HTMLResponse)
+async def submit_sql(request: Request, user_sql: str = Form(...), problem_id: int = Form(...)):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # 문제 정보 조회
+    cursor.execute("SELECT * FROM sql_problems WHERE id = %s", (problem_id,))
+    problem = cursor.fetchone()
+
+    if not problem:
+        raise HTTPException(status_code=404, detail="Problem not found")
+
+    # 정답 SQL 쿼리 (정답이 문제가 어떻게 저장되어 있는지에 따라 다를 수 있음)
+    # correct_sql = problem[3]  # 예시로 4번째 컬럼이 정답 SQL이라고 가정
+
+    feedback = ""
+    result = None  # 결과가 없을 경우를 대비해 기본값을 None으로 설정
+    columns = []
+    error = None
+
+    try:
+        # 제출된 SQL 쿼리 실행
+        cursor.execute(user_sql)
+        result = cursor.fetchall()  # 실행 결과 가져오기
+        columns = [desc[0] for desc in cursor.description]  # 컬럼 이름 가져오기
+
+        # 정답 SQL과 비교
+        # if user_sql.strip() == correct_sql.strip():
+        #     feedback = "정답입니다!"
+        # else:
+        #     feedback = "오답입니다. 다시 시도하세요."
+
+    except Exception as e:
+        feedback = "쿼리 실행 오류: " + str(e)
+        error = str(e)
+
+    cursor.close()
+    conn.close()
+
+    # 문제 상세 페이지 반환
+    return templates.TemplateResponse("sql_challenge_detail.html", {
+        "request": request,
+        "problem": problem,
+        # "feedback": feedback,
+        "result": result,
+        "columns": columns,
+        "error": error
+    })
